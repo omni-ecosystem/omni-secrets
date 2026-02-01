@@ -64,3 +64,9 @@ fi
 
 echo ""
 echo "omni-secrets is located at: $TARGET_DIR"
+echo ""
+echo "IMPORTANT: omni-secrets requires --data-dir when sourced:"
+echo "  source ~/.omni-ecosystem/omni-secrets/index.sh --data-dir=/path/to/data"
+echo ""
+echo "Example:"
+echo "  source ~/.omni-ecosystem/omni-secrets/index.sh --data-dir=\$HOME/.local/share/omni-secrets"

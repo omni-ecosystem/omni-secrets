@@ -6,19 +6,25 @@ Secrets and encrypted vault management for **bash** using [age](https://github.c
 
 ## Dependencies
 
-- [omni-ui-kit](../omni-ui-kit/) — color variables and UI functions (`print_header`, `wait_for_enter`, etc)
-- [omni-navigator](../omni-navigator/) — file/directory browser for key selection and vault path picking
+- [omni-ui-kit](https://github.com/omni-ecosystem/omni-ui-kit) — color variables and UI functions
+- [omni-navigator](https://github.com/omni-ecosystem/omni-navigator) — file/directory browser for key selection and vault path picking
 
 Menu primitives (`menu_cmd`, `menu_line`, etc), input helpers (`read_with_instant_back`, `read_with_esc_cancel`), and the help screen are all self-contained in `components.sh`.
 
 ## Config
 
-omni-secrets manages its own config directory:
+**IMPORTANT:** omni-secrets requires `--data-dir` when sourced:
 
-- **Dev:** `libs/omni-secrets/config/` (relative to the lib)
-- **Installed** (`/usr/lib/`): `$HOME/.config/omni-secrets/`
+```bash
+source omni-secrets/index.sh --data-dir=/path/to/data
+```
 
-Config files: `.secrets.json`, `.vaults.json` — both created automatically as empty arrays on first use.
+**Example:**
+```bash
+source omni-secrets/index.sh --data-dir=$HOME/.local/share/omni-secrets
+```
+
+The data directory must exist before sourcing. Config files (`.secrets.json`, `.vaults.json`) are created automatically as empty arrays on first use.
 
 ## Standalone usage
 
@@ -26,23 +32,18 @@ Config files: `.secrets.json`, `.vaults.json` — both created automatically as 
 
 ```bash
 # From bash (run `bash` first if you're in zsh)
-source libs/omni-ui-kit/index.sh
-source libs/omni-navigator/index.sh
-source libs/omni-secrets/index.sh
+source omni-secrets/index.sh --data-dir=$HOME/.local/share/omni-secrets
 
 show_secrets_menu
 ```
 
-One-liner from any shell:
+One liner:
 
 ```bash
-bash -ic 'source libs/omni-ui-kit/index.sh && source libs/omni-navigator/index.sh && source libs/omni-secrets/index.sh && show_secrets_menu'
+bash -ic 'source omni-secrets/index.sh --data-dir=$HOME/path/to/desired/folder && show_secrets_menu'
 ```
 
-### Storage functions only (no UI)
-
-```bash
-source libs/omni-secrets/index.sh
+### Storage functions only
 
 # Secrets
 save_secret "my-key" "/path/to/private.key" "/path/to/public.key" "/path/to/passphrase.age"
@@ -58,10 +59,10 @@ delete_vault 0
 update_vault_secret 0 "new-secret-uuid"
 ```
 
-### Vault operations (no UI deps)
+### Vault operations
 
 ```bash
-source libs/omni-secrets/index.sh
+source omni-secrets/index.sh --data-dir=$HOME/.local/share/omni-secrets
 
 mount_vault 0       # mount vault at index 0
 unmount_vault 0     # unmount vault at index 0
@@ -107,31 +108,20 @@ init_vault "/path/to/cipher" "secret-uuid"
 | `show_add_secret_flow` | Browser-based secret key selection |
 | `show_add_vault_screen` | Create or add existing vault |
 
-### Menu primitives (`components.sh`)
-
-| Function | Description |
-|----------|-------------|
-| `menu_cmd` | Format a `key label` menu command |
-| `menu_num_cmd` | Format a numbered range command (`m1-m3 mount`) |
-| `menu_line` | Join and print menu commands |
-| `read_with_instant_back` | Read input where `b` triggers instant back |
-| `read_with_esc_cancel` | Read input with ESC cancellation |
-| `display_secrets_help` | Show the help screen |
-
 ## File structure
 
 ```
 omni-secrets/
-  index.sh              — config resolution + imports
+  index.sh              — config resolution and imports
   storage.sh            — secrets JSON storage
-  components.sh         — menu primitives, input helpers, display components, help screen
+  components.sh         — display components
   add.sh                — add secret flow
   menu.sh               — main menu and entry point
   vaults/
     storage.sh          — vaults JSON storage
     ops.sh              — mount/unmount/init
     add.sh              — add vault flow
-  config/               — dev config dir (created on first use)
+  config/               — dev config dir
     .secrets.json
     .vaults.json
 ```
