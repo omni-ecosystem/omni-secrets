@@ -2,7 +2,7 @@
 
 set -e
 
-REPO_URL="git@github.com:nickojs/omni-secrets.git"
+REPO_URL="git@github.com:omni-ecosystem/omni-secrets.git"
 INSTALL_DIR="$HOME/.omni-ecosystem"
 TARGET_DIR="$INSTALL_DIR/omni-secrets"
 NAVIGATOR_DIR="$INSTALL_DIR/omni-navigator"
@@ -66,7 +66,4 @@ echo ""
 echo "omni-secrets is located at: $TARGET_DIR"
 echo ""
 echo "IMPORTANT: omni-secrets requires --data-dir when sourced:"
-echo "  source ~/.omni-ecosystem/omni-secrets/index.sh --data-dir=/path/to/data"
-echo ""
-echo "Example:"
-echo "  source ~/.omni-ecosystem/omni-secrets/index.sh --data-dir=\$HOME/.local/share/omni-secrets"
+echo "  source omni-secrets/index.sh --data-dir=/path/to/data"
