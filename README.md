@@ -9,8 +9,6 @@ Secrets and encrypted vault management for **bash** using [age](https://github.c
 - [omni-ui-kit](https://github.com/omni-ecosystem/omni-ui-kit) — color variables and UI functions
 - [omni-navigator](https://github.com/omni-ecosystem/omni-navigator) — file/directory browser for key selection and vault path picking
 
-Menu primitives (`menu_cmd`, `menu_line`, etc), input helpers (`read_with_instant_back`, `read_with_esc_cancel`), and the help screen are all self-contained in `components.sh`.
-
 ## Config
 
 **IMPORTANT:** omni-secrets requires `--data-dir` when sourced:
@@ -24,7 +22,7 @@ source omni-secrets/index.sh --data-dir=/path/to/data
 source omni-secrets/index.sh --data-dir=$HOME/.local/share/omni-secrets
 ```
 
-The data directory must exist before sourcing. Config files (`.secrets.json`, `.vaults.json`) are created automatically as empty arrays on first use.
+The data directory must exist before sourcing. This allows users to control where data is stored by providing the path explicitly when sourcing the library.
 
 ## Standalone usage
 
