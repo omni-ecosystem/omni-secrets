@@ -4,6 +4,18 @@ Secrets and encrypted vault management for **bash** using [age](https://github.c
 
 **Requires bash** and external tools: `jq`, `age`, `gocryptfs`, `fusermount`, `uuidgen`.
 
+## Installation
+
+Run the install script to clone the repository to `~/.omni-ecosystem/omni-secrets`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/omni-ecosystem/omni-secrets/refs/heads/main/install.sh | bash
+```
+
+The script will automatically install [omni-navigator](https://github.com/omni-ecosystem/omni-navigator) and [omni-ui-kit](https://github.com/omni-ecosystem/omni-ui-kit) if not already present. Running the script again will update an existing installation. To remove, run `./uninstall.sh` from the installation directory.
+
+**Note:** You must install the external dependencies (`jq`, `age`, `gocryptfs`, `fusermount`, `uuidgen`) separately before using omni-secrets.
+
 ## Dependencies
 
 - [omni-ui-kit](https://github.com/omni-ecosystem/omni-ui-kit) — color variables and UI functions
