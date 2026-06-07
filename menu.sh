@@ -19,6 +19,7 @@ show_secrets_default_screen() {
     printf '\033[?25l'
     clear
     print_header "Secrets & Vaults"
+    echo -e "${DIM}Secrets config:${NC} $(get_secrets_config_directory)"
 
     # Display secrets and vaults side by side
     display_secrets_and_vaults secrets vaults
@@ -33,6 +34,7 @@ show_secrets_default_screen() {
         "$([[ $vault_count -gt 0 && $secret_count -gt 0 ]] && menu_num_cmd 's' "$vault_count" 'switch secret' "$MENU_COLOR_OPEN")" \
         "$(menu_num_cmd 'd' "$secret_count" 'delete secret' "$MENU_COLOR_DELETE")" \
         "$(menu_num_cmd 'r' "$vault_count" 'remove vault' "$MENU_COLOR_DELETE")" \
+        "$(menu_cmd 'c' 'change dir' "$MENU_COLOR_NAV")" \
         "$(menu_cmd 'b' 'back' "$MENU_COLOR_NAV")" \
         "$(menu_cmd 'h' 'help' "$MENU_COLOR_NAV")"
     echo ""
@@ -45,6 +47,7 @@ show_secrets_default_screen() {
     case "$choice" in
         [Bb]) return 1 ;;
         [Hh]) return 3 ;;
+        [Cc]) return 5 ;;
         [Aa])
             show_add_secret_flow
             return 0
@@ -141,6 +144,40 @@ show_secrets_default_screen() {
     return 0
 }
 
+# Change secrets directory screen
+# Lets the user point omni-secrets at a different storage location. Persistence
+# is host-specific, so we hand the new path to on_omni_secrets_data_dir_change
+# (defined by the consuming app) if it exists - omni-secrets itself only knows
+# how to read from OMNI_SECRETS_DATA_DIR, not how the host persists config.
+# Returns: 0 always
+show_change_secrets_dir_screen() {
+    local current_dir
+    current_dir=$(get_secrets_config_directory)
+
+    show_interactive_browser "directory" "$HOME" "/home" "Select: Secrets Storage Directory"
+
+    if [ -z "$SELECTED_PROJECTS_DIR" ]; then
+        return 0
+    fi
+
+    local new_dir="$SELECTED_PROJECTS_DIR"
+    unset SELECTED_PROJECTS_DIR
+
+    if [ "$new_dir" = "$current_dir" ]; then
+        return 0
+    fi
+
+    if type on_omni_secrets_data_dir_change &>/dev/null; then
+        on_omni_secrets_data_dir_change "$new_dir"
+    fi
+
+    echo ""
+    print_success "Secrets directory set to: $new_dir"
+    print_warning "Restart the app for this to take effect. Existing secrets won't be moved automatically."
+    wait_for_enter
+    return 0
+}
+
 # Main secrets menu entry point
 show_secrets_menu() {
     while true; do
@@ -155,6 +192,9 @@ show_secrets_menu() {
                 ;;
             4)              # Add vault
                 show_add_vault_screen
+                ;;
+            5)              # Change secrets directory
+                show_change_secrets_dir_screen
                 ;;
         esac
     done
