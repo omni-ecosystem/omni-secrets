@@ -31,7 +31,7 @@ show_secrets_default_screen() {
         "$([[ $secret_count -gt 0 ]] && menu_cmd 'v' 'add vault' "$MENU_COLOR_ADD")" \
         "$(menu_num_cmd 'm' "$vault_count" 'mount' "$MENU_COLOR_ACTION")" \
         "$(menu_num_cmd 'u' "$vault_count" 'unmount' "$MENU_COLOR_ACTION")" \
-        "$([[ $vault_count -gt 0 && $secret_count -gt 0 ]] && menu_num_cmd 's' "$vault_count" 'switch secret' "$MENU_COLOR_OPEN")" \
+        "$([[ $vault_count -gt 0 ]] && menu_num_cmd 'e' "$vault_count" 'manage vault' "$MENU_COLOR_OPEN")" \
         "$(menu_num_cmd 'd' "$secret_count" 'delete secret' "$MENU_COLOR_DELETE")" \
         "$(menu_num_cmd 'r' "$vault_count" 'remove vault' "$MENU_COLOR_DELETE")" \
         "$(menu_cmd 'c' 'change dir' "$MENU_COLOR_NAV")" \
@@ -84,14 +84,12 @@ show_secrets_default_screen() {
         return 0
     fi
 
-    # Handle switch secret commands (s1, s2, etc.)
-    if [[ "$choice" =~ ^[Ss]([0-9]+)$ ]]; then
-        local switch_num="${BASH_REMATCH[1]}"
-        if [ "$switch_num" -ge 1 ] && [ "$switch_num" -le "$vault_count" ]; then
-            local switch_index=$((switch_num - 1))
-            if ! reassign_vault_secret "$switch_index"; then
-                wait_for_enter
-            fi
+    # Handle manage vault commands (e1, e2, etc.)
+    if [[ "$choice" =~ ^[Ee]([0-9]+)$ ]]; then
+        local manage_num="${BASH_REMATCH[1]}"
+        if [ "$manage_num" -ge 1 ] && [ "$manage_num" -le "$vault_count" ]; then
+            local manage_index=$((manage_num - 1))
+            show_manage_vault_screen "$manage_index"
         fi
         return 0
     fi

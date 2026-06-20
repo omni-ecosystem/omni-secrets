@@ -123,6 +123,54 @@ update_vault_secret() {
     return 1
 }
 
+# Update vault's cipher directory
+# Parameters: vault_index (0-based), new_cipher_dir
+# Returns: 0 on success, 1 on failure
+update_vault_cipher_dir() {
+    local vault_index="$1"
+    local new_cipher_dir="$2"
+
+    local vaults_file=$(get_vaults_file)
+    if [ ! -f "$vaults_file" ]; then
+        return 1
+    fi
+
+    local temp_file=$(mktemp)
+    if jq --argjson idx "$vault_index" \
+          --arg cipherDir "$new_cipher_dir" \
+          '.[$idx].cipherDir = $cipherDir' \
+          "$vaults_file" > "$temp_file" 2>/dev/null; then
+        mv "$temp_file" "$vaults_file"
+        return 0
+    fi
+    rm -f "$temp_file"
+    return 1
+}
+
+# Update vault's mount point
+# Parameters: vault_index (0-based), new_mount_point
+# Returns: 0 on success, 1 on failure
+update_vault_mount_point() {
+    local vault_index="$1"
+    local new_mount_point="$2"
+
+    local vaults_file=$(get_vaults_file)
+    if [ ! -f "$vaults_file" ]; then
+        return 1
+    fi
+
+    local temp_file=$(mktemp)
+    if jq --argjson idx "$vault_index" \
+          --arg mountPoint "$new_mount_point" \
+          '.[$idx].mountPoint = $mountPoint' \
+          "$vaults_file" > "$temp_file" 2>/dev/null; then
+        mv "$temp_file" "$vaults_file"
+        return 0
+    fi
+    rm -f "$temp_file"
+    return 1
+}
+
 # Get secret by UUID
 # Parameters: secret_id
 # Returns: id:privateKey:publicKey:encryptedPassphrase (echoes to stdout)

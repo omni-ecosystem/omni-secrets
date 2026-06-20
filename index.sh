@@ -57,6 +57,7 @@ source "$SECRETS_DIR/storage.sh"           # JSON storage functions
 source "$SECRETS_DIR/vaults/storage.sh"    # Vaults JSON storage functions
 source "$SECRETS_DIR/vaults/ops.sh"        # Vault mount/unmount/init
 source "$SECRETS_DIR/vaults/add.sh"        # Vault add functionality
+source "$SECRETS_DIR/vaults/manage.sh"     # Vault management screen
 source "$SECRETS_DIR/components.sh"        # Display components
 source "$SECRETS_DIR/add.sh"               # Add secret functionality
 source "$SECRETS_DIR/menu.sh"              # Main menu and entry point

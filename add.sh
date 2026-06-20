@@ -20,42 +20,23 @@ show_add_secret_flow() {
     local private_key_dir=$(dirname "$private_key_path")
     local private_key_name=$(basename "$private_key_path")
 
-    # Step 2: Try to auto-detect public key
-    local expected_pub="${private_key_path}.pub"
-    local public_key_path=""
+    # Step 2: Select public key
+    show_interactive_browser "files" "$private_key_dir" "/home" "Select: Public Key" "true"
 
-    if [ -f "$expected_pub" ]; then
-        public_key_path="$expected_pub"
-    else
-        # No auto-detect - prompt for public key
-        show_interactive_browser "files" "$private_key_dir" "/home" "Select: Public Key" "true"
-
-        if [ ${#MARKED_FILES[@]} -eq 0 ]; then
-            return 1
-        fi
-
-        public_key_path="${MARKED_FILES[0]}"
+    if [ ${#MARKED_FILES[@]} -eq 0 ]; then
+        return 1
     fi
 
-    # Step 3: Try to auto-detect encrypted passphrase
-    local private_key_basename=$(basename "$private_key_path")
-    local passphrase_pattern="${private_key_dir}/${private_key_basename}_*.age"
-    local -a passphrase_matches=($(ls $passphrase_pattern 2>/dev/null))
-    local encrypted_passphrase_path=""
+    local public_key_path="${MARKED_FILES[0]}"
 
-    if [ ${#passphrase_matches[@]} -eq 1 ]; then
-        # Exactly one match - auto-select
-        encrypted_passphrase_path="${passphrase_matches[0]}"
-    else
-        # No match or multiple matches - prompt
-        show_interactive_browser "files" "$private_key_dir" "/home" "Select: Encrypted Passphrase" "true"
+    # Step 3: Select encrypted passphrase
+    show_interactive_browser "files" "$private_key_dir" "/home" "Select: Encrypted Passphrase" "true"
 
-        if [ ${#MARKED_FILES[@]} -eq 0 ]; then
-            return 1
-        fi
-
-        encrypted_passphrase_path="${MARKED_FILES[0]}"
+    if [ ${#MARKED_FILES[@]} -eq 0 ]; then
+        return 1
     fi
+
+    local encrypted_passphrase_path="${MARKED_FILES[0]}"
 
     # Step 4: Save the secret
     local secret_name="$private_key_name"
