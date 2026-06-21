@@ -119,7 +119,7 @@ display_secrets_and_vaults() {
     else
         local counter=1
         for vault_info in "${vaults_ref[@]}"; do
-            IFS=':' read -r name cipher_dir mount_point secret_id <<< "$vault_info"
+            IFS=':' read -r name vault_location cipher_dir mount_point secret_id <<< "$vault_info"
 
             local status_icon="${DIM}○${NC}"
             if get_vault_status "$mount_point"; then
@@ -152,14 +152,19 @@ display_secrets_and_vaults() {
                 fi
             fi
 
-            local display_cipher=$(shorten_path "${cipher_dir/#$HOME/\~}")
-            local display_mount=$(shorten_path "${mount_point/#$HOME/\~}")
             local display_name=$(truncate_filename "$name" 18)
 
             right_lines+=("$status_icon ${BRIGHT_CYAN}Vault #$counter${NC} ${BOLD}\"${display_name}\"${NC}")
-            right_lines+=("  ${DIM}secret:${NC}      $secret_display")
-            right_lines+=("  ${DIM}cipher dir:${NC}  $display_cipher")
-            right_lines+=("  ${DIM}mount dir:${NC}   $display_mount")
+            right_lines+=("  ${DIM}secret:${NC}    $secret_display")
+            if [ -n "$vault_location" ]; then
+                local display_location=$(shorten_path "${vault_location/#$HOME/\~}")
+                right_lines+=("  ${DIM}location:${NC}  $display_location")
+            else
+                local display_cipher=$(shorten_path "${cipher_dir/#$HOME/\~}")
+                local display_mount=$(shorten_path "${mount_point/#$HOME/\~}")
+                right_lines+=("  ${DIM}cipher dir:${NC}  $display_cipher")
+                right_lines+=("  ${DIM}mount dir:${NC}   $display_mount")
+            fi
             right_lines+=("")
             counter=$((counter + 1))
         done

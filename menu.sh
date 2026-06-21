@@ -120,7 +120,7 @@ show_secrets_default_screen() {
         if [ "$remove_num" -ge 1 ] && [ "$remove_num" -le "$vault_count" ]; then
             local remove_index=$((remove_num - 1))
             local vault_info="${vaults[$remove_index]}"
-            IFS=':' read -r name _ mount_point _ <<< "$vault_info"
+            IFS=':' read -r name _ _ mount_point _ <<< "$vault_info"
 
             # Check if mounted
             if get_vault_status "$mount_point"; then
@@ -132,7 +132,11 @@ show_secrets_default_screen() {
                 local confirm
                 read_with_instant_back confirm
                 if [[ "$confirm" =~ ^[Yy]$ ]]; then
-                    delete_vault "$remove_index"
+                    if delete_vault "$remove_index"; then
+                        if declare -f remove_vault_from_all_workspaces > /dev/null 2>&1; then
+                            remove_vault_from_all_workspaces "$name"
+                        fi
+                    fi
                 fi
             fi
         fi

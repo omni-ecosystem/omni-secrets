@@ -21,7 +21,7 @@ mount_vault() {
     fi
 
     local vault_info="${vaults[$vault_index]}"
-    IFS=':' read -r name cipher_dir mount_point secret_id <<< "$vault_info"
+    IFS=':' read -r name _ cipher_dir mount_point secret_id <<< "$vault_info"
 
     # Check if already mounted
     if get_vault_status "$mount_point"; then
@@ -159,7 +159,7 @@ unmount_vault() {
     fi
 
     local vault_info="${vaults[$vault_index]}"
-    IFS=':' read -r name _ mount_point _ <<< "$vault_info"
+    IFS=':' read -r name _ _ mount_point _ <<< "$vault_info"
 
     # Check if mounted
     if ! get_vault_status "$mount_point"; then
@@ -226,7 +226,7 @@ reassign_vault_secret() {
     fi
 
     local vault_info="${vaults[$vault_index]}"
-    IFS=':' read -r name _ _ _ <<< "$vault_info"
+    IFS=':' read -r name _ _ _ _ <<< "$vault_info"
 
     # Load available secrets
     local -a secrets=()

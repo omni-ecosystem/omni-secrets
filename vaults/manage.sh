@@ -19,7 +19,7 @@ show_manage_vault_screen() {
         load_secrets secrets
 
         local vault_info="${vaults[$vault_index]}"
-        IFS=':' read -r name cipher_dir mount_point secret_id <<< "$vault_info"
+        IFS=':' read -r name vault_location cipher_dir mount_point secret_id <<< "$vault_info"
 
         local secret_count=${#secrets[@]}
 
@@ -42,16 +42,27 @@ show_manage_vault_screen() {
         echo ""
         echo -e "  ${BOLD}\"$name\"${NC}  ${DIM}(${NC}${status_label}${DIM})${NC}"
         echo ""
-        echo -e "  ${DIM}cipher dir:${NC}   ${cipher_dir/#$HOME/\~}"
-        echo -e "  ${DIM}mount point:${NC}  ${mount_point/#$HOME/\~}"
+        if [ -n "$vault_location" ]; then
+            echo -e "  ${DIM}vault location:${NC}  ${vault_location/#$HOME/\~}"
+        else
+            echo -e "  ${DIM}cipher dir:${NC}   ${cipher_dir/#$HOME/\~}"
+            echo -e "  ${DIM}mount point:${NC}  ${mount_point/#$HOME/\~}"
+        fi
         echo -e "  ${DIM}secret:${NC}       $(echo -e "$secret_display")"
         echo ""
 
-        menu_line \
-            "$(menu_cmd 'c' 'cipher dir' "$MENU_COLOR_ACTION")" \
-            "$(menu_cmd 'm' 'mount point' "$MENU_COLOR_ACTION")" \
-            "$([[ $secret_count -gt 0 ]] && menu_cmd 's' 'switch secret' "$MENU_COLOR_OPEN")" \
-            "$(menu_cmd 'b' 'back' "$MENU_COLOR_NAV")"
+        if [ -n "$vault_location" ]; then
+            menu_line \
+                "$(menu_cmd 'l' 'location' "$MENU_COLOR_ACTION")" \
+                "$([[ $secret_count -gt 0 ]] && menu_cmd 's' 'switch secret' "$MENU_COLOR_OPEN")" \
+                "$(menu_cmd 'b' 'back' "$MENU_COLOR_NAV")"
+        else
+            menu_line \
+                "$(menu_cmd 'c' 'cipher dir' "$MENU_COLOR_ACTION")" \
+                "$(menu_cmd 'm' 'mount point' "$MENU_COLOR_ACTION")" \
+                "$([[ $secret_count -gt 0 ]] && menu_cmd 's' 'switch secret' "$MENU_COLOR_OPEN")" \
+                "$(menu_cmd 'b' 'back' "$MENU_COLOR_NAV")"
+        fi
         echo ""
 
         printf '\033[?25h'
@@ -61,57 +72,81 @@ show_manage_vault_screen() {
 
         case "$choice" in
             [Bb]) return 0 ;;
-            [Cc])
-                unset SELECTED_PROJECTS_DIR
-                show_interactive_browser "directory" "$HOME" "/home" "Select: Cipher Directory" "false" "true"
-
-                if [ -n "$SELECTED_PROJECTS_DIR" ]; then
-                    local new_cipher_dir="$SELECTED_PROJECTS_DIR"
+            [Ll])
+                if [ -n "$vault_location" ]; then
                     unset SELECTED_PROJECTS_DIR
+                    show_interactive_browser "directory" "$HOME" "/home" "Select: Vault Location" "false" "true"
 
-                    if ! validate_vault_paths "$new_cipher_dir" "$mount_point"; then
-                        true  # validate_vault_paths already showed an error screen
-                    elif update_vault_cipher_dir "$vault_index" "$new_cipher_dir"; then
-                        clear
-                        print_header "MANAGE VAULT"
-                        echo ""
-                        echo -e "${BRIGHT_GREEN}✓${NC} Cipher directory updated"
-                        echo ""
-                        wait_for_enter
-                    else
-                        clear
-                        print_header "MANAGE VAULT"
-                        echo ""
-                        echo -e "${BRIGHT_RED}✗${NC} Failed to update cipher directory"
-                        echo ""
-                        wait_for_enter
+                    if [ -n "$SELECTED_PROJECTS_DIR" ]; then
+                        if update_vault_location "$vault_index" "$SELECTED_PROJECTS_DIR"; then
+                            clear
+                            print_header "MANAGE VAULT"
+                            echo ""
+                            echo -e "${BRIGHT_GREEN}✓${NC} Vault location updated"
+                            echo ""
+                            wait_for_enter
+                        else
+                            clear
+                            print_header "MANAGE VAULT"
+                            echo ""
+                            echo -e "${BRIGHT_RED}✗${NC} Failed to update vault location"
+                            echo ""
+                            wait_for_enter
+                        fi
+                    fi
+                fi
+                ;;
+            [Cc])
+                if [ -z "$vault_location" ]; then
+                    unset SELECTED_PROJECTS_DIR
+                    show_interactive_browser "directory" "$HOME" "/home" "Select: Cipher Directory" "false" "true"
+
+                    if [ -n "$SELECTED_PROJECTS_DIR" ]; then
+                        local new_cipher_dir="$SELECTED_PROJECTS_DIR"
+                        unset SELECTED_PROJECTS_DIR
+
+                        if update_vault_cipher_dir "$vault_index" "$new_cipher_dir"; then
+                            clear
+                            print_header "MANAGE VAULT"
+                            echo ""
+                            echo -e "${BRIGHT_GREEN}✓${NC} Cipher directory updated"
+                            echo ""
+                            wait_for_enter
+                        else
+                            clear
+                            print_header "MANAGE VAULT"
+                            echo ""
+                            echo -e "${BRIGHT_RED}✗${NC} Failed to update cipher directory"
+                            echo ""
+                            wait_for_enter
+                        fi
                     fi
                 fi
                 ;;
             [Mm])
-                unset SELECTED_PROJECTS_DIR
-                show_interactive_browser "directory" "$HOME" "/home" "Select: Mount Point" "false" "true"
-
-                if [ -n "$SELECTED_PROJECTS_DIR" ]; then
-                    local new_mount_point="$SELECTED_PROJECTS_DIR"
+                if [ -z "$vault_location" ]; then
                     unset SELECTED_PROJECTS_DIR
+                    show_interactive_browser "directory" "$HOME" "/home" "Select: Mount Point" "false" "true"
 
-                    if ! validate_vault_paths "$cipher_dir" "$new_mount_point"; then
-                        true  # validate_vault_paths already showed an error screen
-                    elif update_vault_mount_point "$vault_index" "$new_mount_point"; then
-                        clear
-                        print_header "MANAGE VAULT"
-                        echo ""
-                        echo -e "${BRIGHT_GREEN}✓${NC} Mount point updated"
-                        echo ""
-                        wait_for_enter
-                    else
-                        clear
-                        print_header "MANAGE VAULT"
-                        echo ""
-                        echo -e "${BRIGHT_RED}✗${NC} Failed to update mount point"
-                        echo ""
-                        wait_for_enter
+                    if [ -n "$SELECTED_PROJECTS_DIR" ]; then
+                        local new_mount_point="$SELECTED_PROJECTS_DIR"
+                        unset SELECTED_PROJECTS_DIR
+
+                        if update_vault_mount_point "$vault_index" "$new_mount_point"; then
+                            clear
+                            print_header "MANAGE VAULT"
+                            echo ""
+                            echo -e "${BRIGHT_GREEN}✓${NC} Mount point updated"
+                            echo ""
+                            wait_for_enter
+                        else
+                            clear
+                            print_header "MANAGE VAULT"
+                            echo ""
+                            echo -e "${BRIGHT_RED}✗${NC} Failed to update mount point"
+                            echo ""
+                            wait_for_enter
+                        fi
                     fi
                 fi
                 ;;

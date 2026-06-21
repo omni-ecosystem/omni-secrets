@@ -22,7 +22,8 @@ ensure_vaults_file() {
 
 # Load vaults into array
 # Parameters: array_name_ref
-# Returns: name:cipherDir:mountPoint:secretId
+# Returns: name:vaultLocation:cipherDir:mountPoint:secretId
+#   vaultLocation is empty string for legacy vaults that predate this field
 load_vaults() {
     local -n result_array=$1
     result_array=()
@@ -38,26 +39,28 @@ load_vaults() {
 
     while IFS= read -r line; do
         [ -n "$line" ] && result_array+=("$line")
-    done < <(jq -r '.[] | "\(.name):\(.cipherDir):\(.mountPoint):\(.secretId)"' "$vaults_file" 2>/dev/null)
+    done < <(jq -r '.[] | "\(.name):\(.vaultLocation // ""):\(.cipherDir):\(.mountPoint):\(.secretId)"' "$vaults_file" 2>/dev/null)
 }
 
 # Save a new vault
-# Parameters: name, cipher_dir, mount_point, secret_id
+# Parameters: name, vault_location, cipher_dir, mount_point, secret_id
 save_vault() {
     local name="$1"
-    local cipher_dir="$2"
-    local mount_point="$3"
-    local secret_id="$4"
+    local vault_location="$2"
+    local cipher_dir="$3"
+    local mount_point="$4"
+    local secret_id="$5"
 
     ensure_vaults_file
     local vaults_file=$(get_vaults_file)
 
     local temp_file=$(mktemp)
     if jq --arg name "$name" \
+          --arg vaultLocation "$vault_location" \
           --arg cipherDir "$cipher_dir" \
           --arg mountPoint "$mount_point" \
           --arg secretId "$secret_id" \
-          '. += [{"name": $name, "cipherDir": $cipherDir, "mountPoint": $mountPoint, "secretId": $secretId}]' \
+          '. += [{"name": $name, "vaultLocation": $vaultLocation, "cipherDir": $cipherDir, "mountPoint": $mountPoint, "secretId": $secretId}]' \
           "$vaults_file" > "$temp_file" 2>/dev/null; then
         mv "$temp_file" "$vaults_file"
         return 0
@@ -163,6 +166,34 @@ update_vault_mount_point() {
     if jq --argjson idx "$vault_index" \
           --arg mountPoint "$new_mount_point" \
           '.[$idx].mountPoint = $mountPoint' \
+          "$vaults_file" > "$temp_file" 2>/dev/null; then
+        mv "$temp_file" "$vaults_file"
+        return 0
+    fi
+    rm -f "$temp_file"
+    return 1
+}
+
+# Update vault's location (atomically sets vaultLocation, cipherDir, and mountPoint)
+# Parameters: vault_index (0-based), new_vault_location
+# Returns: 0 on success, 1 on failure
+update_vault_location() {
+    local vault_index="$1"
+    local new_location="$2"
+    local new_cipher_dir="$new_location/cipher"
+    local new_mount_point="$new_location/mount"
+
+    local vaults_file=$(get_vaults_file)
+    if [ ! -f "$vaults_file" ]; then
+        return 1
+    fi
+
+    local temp_file=$(mktemp)
+    if jq --argjson idx "$vault_index" \
+          --arg vaultLocation "$new_location" \
+          --arg cipherDir "$new_cipher_dir" \
+          --arg mountPoint "$new_mount_point" \
+          '.[$idx].vaultLocation = $vaultLocation | .[$idx].cipherDir = $cipherDir | .[$idx].mountPoint = $mountPoint' \
           "$vaults_file" > "$temp_file" 2>/dev/null; then
         mv "$temp_file" "$vaults_file"
         return 0
